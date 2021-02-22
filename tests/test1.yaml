@@ -854,7 +854,7 @@ binary_sensor:
   - platform: gpio
     name: 'MCP23S08 Pin #1'
     pin:
-      mcp23s08: mcp23s08_hub
+      mcp23xxx: mcp23s08_hub
       # Use pin number 1
       number: 1
       # One of INPUT or INPUT_PULLUP
@@ -863,12 +863,22 @@ binary_sensor:
   - platform: gpio
     name: 'MCP23S17 Pin #1'
     pin:
-      mcp23s17: mcp23s17_hub
+      mcp23xxx: mcp23s17_hub
       # Use pin number 1
       number: 1
       # One of INPUT or INPUT_PULLUP
       mode: INPUT_PULLUP
       inverted: False
+  - platform: gpio
+    name: 'MCP23S17 Pin #1 with interrupt'
+    pin:
+      mcp23xxx: mcp23s17_hub
+      # Use pin number 1
+      number: 1
+      # One of INPUT or INPUT_PULLUP
+      mode: INPUT_PULLUP
+      inverted: False
+      interrupt: FALLING
   - platform: gpio
     pin: GPIO9
     name: 'Living Room Window'
@@ -987,14 +997,14 @@ binary_sensor:
   - platform: gpio
     name: 'MCP21 binary sensor'
     pin:
-      mcp23017: mcp23017_hub
+      mcp23xxx: mcp23017_hub
       number: 1
       mode: INPUT
       inverted: True
   - platform: gpio
     name: 'MCP22 binary sensor'
     pin:
-      mcp23008: mcp23008_hub
+      mcp23xxx: mcp23008_hub
       number: 7
       mode: INPUT_PULLUP
       inverted: False
@@ -1151,14 +1161,14 @@ output:
   - platform: gpio
     id: id22
     pin:
-      mcp23017: mcp23017_hub
+      mcp23xxx: mcp23017_hub
       number: 0
       mode: OUTPUT
       inverted: False
   - platform: gpio
     id: id23
     pin:
-      mcp23008: mcp23008_hub
+      mcp23xxx: mcp23008_hub
       number: 0
       mode: OUTPUT
       inverted: False
@@ -1434,7 +1444,7 @@ switch:
   - platform: gpio
     name: 'MCP23S08 Pin #0'
     pin:
-      mcp23s08: mcp23s08_hub
+      mcp23xxx: mcp23s08_hub
       # Use pin number 0
       number: 0
       mode: OUTPUT
@@ -1442,7 +1452,7 @@ switch:
   - platform: gpio
     name: 'MCP23S17 Pin #0'
     pin:
-      mcp23s17: mcp23s17_hub
+      mcp23xxx: mcp23s17_hub
       # Use pin number 0
       number: 1
       mode: OUTPUT
@@ -1730,10 +1740,10 @@ display:
       it.print("1234");
   - platform: tm1637
     clk_pin:
-      mcp23017: mcp23017_hub
+      mcp23xxx: mcp23017_hub
       number: 1
     dio_pin:
-      mcp23017: mcp23017_hub
+      mcp23xxx: mcp23017_hub
       number: 2
     intensity: 3
     lambda: |-
