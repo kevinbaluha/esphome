@@ -14,7 +14,8 @@
 
   Written by Limor Fried/Ladyada for Adafruied in any redistribution
  ****************************************************/
-
+#ifndef MLX90614DRV_H
+#define MLX90614DRV_H
 #if (ARDUINO >= 100)
 #include "Arduino.h"
 #else
@@ -47,25 +48,24 @@
  * @brief Class to read from and control a MLX90614 Temp Sensor
  *
  */
-class Adafruit_MLX90614 {
+class MLX90614drv {
 public:
-  Adafruit_MLX90614(uint8_t addr = MLX90614_I2CADDR);
+  MLX90614drv(uint8_t addr = MLX90614_I2CADDR);
   bool begin();
 
-  double readObjectTempC(void);
-  double readAmbientTempC(void);
-  double readObjectTempF(void);
-  double readAmbientTempF(void);
+  double readObject(void);
+  double readAmbient(void);
   uint16_t readEmissivityReg(void);
   void writeEmissivityReg(uint16_t ereg);
   double readEmissivity(void);
   void writeEmissivity(double emissivity);
 
 private:
-  float readTemp(uint8_t reg);
+  double readTemp(uint8_t reg);
 
   uint16_t read16(uint8_t addr);
   void write16(uint8_t addr, uint16_t data);
   byte crc8(byte *addr, byte len);
   uint8_t _addr;
 };
+#endif

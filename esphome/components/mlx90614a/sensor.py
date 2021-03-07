@@ -4,7 +4,7 @@ from esphome import pins
 from esphome.components import i2c, sensor
 from esphome.const import CONF_ID, CONF_TEMPERATURE, DEVICE_CLASS_EMPTY, DEVICE_CLASS_TEMPERATURE, \
     ICON_BRIEFCASE_DOWNLOAD, ICON_THERMOMETER, ICON_EMPTY, UNIT_METER_PER_SECOND_SQUARED, \
-    ICON_SCREEN_ROTATION, UNIT_DEGREE_PER_SECOND, UNIT_CELSIUS, UNIT_PERCENT
+    ICON_SCREEN_ROTATION, UNIT_DEGREE_PER_SECOND, UNIT_KELVIN, UNIT_PERCENT
 
 CONF_AMBIENT_TEMP = 'ambient_temperature'
 CONF_OBJECT_TEMP = 'object_temperature'
@@ -14,8 +14,8 @@ CONF_INITIAL_EMISSIVITY = 'initial_emissivity'
 mlx90614a_ns = cg.esphome_ns.namespace('mlx90614a')
 mlx90614aComponent = mlx90614a_ns.class_('mlx90614aComponent', cg.PollingComponent, i2c.I2CDevice)
 
-temperature_schema = sensor.sensor_schema(UNIT_CELSIUS, ICON_THERMOMETER, 1, DEVICE_CLASS_TEMPERATURE)
-emissivity_schema = sensor.sensor_schema(UNIT_CELSIUS, ICON_THERMOMETER, 0, DEVICE_CLASS_EMPTY)
+temperature_schema = sensor.sensor_schema(UNIT_KELVIN, ICON_THERMOMETER, 1, DEVICE_CLASS_TEMPERATURE)
+emissivity_schema = sensor.sensor_schema(UNIT_PERCENT, ICON_EMPTY, 1, DEVICE_CLASS_EMPTY)
 
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(mlx90614aComponent),
