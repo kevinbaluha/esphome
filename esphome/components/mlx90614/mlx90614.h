@@ -61,31 +61,31 @@ class mlx90614Component : public PollingComponent, public i2c::I2CDevice {
     void set_emissivity(double emissivity) {emissivity_=clamp(emissivity, 0.1, 1.0); }
     float  readAmbient(void) { readTemp(MLX90614_TA); return readTemp(MLX90614_TA); }
     float  readObject(void) { readTemp(MLX90614_TOBJ1); return readTemp(MLX90614_TOBJ1); }
-    uint16_t read16(uint8_t reg) {
-      uint8_t d[3];
-
-      uint8_t f = 0x80 |reg;
-      raw_write(&reg, 1);
-      read_bytes_raw(d, 3);
-      raw_end_transmission(true);
-      return ( d[1]<<8 | d[0] );
-    }
 
     double readEmissivity(void) {
-      return(static_cast<double>(read16(MLX90614_EMISS) / 65535.0));
+      return(((double)read16(MLX90614_EMISS)) / 65535.0);
+      return(((double)read16(MLX90614_EMISS)) / 65535.0);
     }
 
     void writeEmissivity(double emissivity) {
-      uint16_t emissivity_v = static_cast<uint16_t>((emissivity * 65535.0) + .5);
-      this->write_byte_16(MLX90614_EMISS, 0);
-      this->write_byte_16(MLX90614_EMISS, emissivity_v);
+      uint16_t ereg = (uint16_t)(0xffff * emissivity);
+      write16(MLX90614_EMISS, 0); // erase
+      delay(10);
+      write16(MLX90614_EMISS, ereg);
+      delay(10);
     }
 
-    float readTemp(uint8_t reg) {
-      return (((float)read16(reg)));
-    }
+
 
 private:
+  double readTemp(uint8_t reg) { 
+    return (((double)read16(reg))* 0.02); 
+  }
+  uint16_t read16(uint8_t reg);
+  void write16(uint8_t reg, uint16_t data);
+  byte crc8(byte *data, byte len);
+  //uint8_t _addr;
+
   sensor::Sensor *ambient_temperature_sensor_{nullptr};
   sensor::Sensor *object_temperature_sensor_{nullptr};
   sensor::Sensor *emissivity_sensor_{nullptr};

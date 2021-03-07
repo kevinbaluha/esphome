@@ -61,5 +61,53 @@ float mlx90614Component::get_setup_priority() const {
 	return setup_priority::DATA; 
 }
 
+uint16_t mlx90614Component::read16(uint8_t reg) {
+  uint8_t d[3];
+  raw_begin_transmission();
+  raw_write(&reg, 1);
+  raw_end_transmission(false);
+  read_bytes_raw(d, 3);
+  raw_end_transmission(true);
+  return ( d[1]<<8 | d[0] );
+}
+
+void mlx90614Component::write16(uint8_t reg, uint16_t data) {
+  uint8_t pec;
+  uint8_t pecbuf[4];
+
+  pecbuf[0] = address_ << 1;
+  pecbuf[1] = reg;
+  pecbuf[2] = data & 0xff;
+  pecbuf[3] = data >> 8;
+  pec = crc8(pecbuf, sizeof pecbuf);
+  raw_begin_transmission();
+  raw_write(&address_, 1);
+  raw_write(&reg, 1);
+  raw_write(&pecbuf[2],1);    // lo
+  raw_write(&pecbuf[3],1);    // hi
+  raw_write(&pec,1);          // pec
+  raw_end_transmission(true);
+
+}
+
+byte mlx90614Component::crc8(byte *addr, byte len) {
+  // The PEC calculation includes all bits except the START, REPEATED START, STOP,
+  // ACK, and NACK bits. The PEC is a CRC-8 with polynomial X8+X2+X1+1.
+
+  byte crc = 0;
+  while (len--) {
+    byte inbyte = *addr++;
+    for (byte i = 8; i; i--) {
+      byte carry = (crc ^ inbyte) & 0x80;
+      crc <<= 1;
+      if (carry)
+	crc ^= 0x7;
+      inbyte <<= 1;
+    }
+  }
+  return crc;
+}
+
+
 }
 }
