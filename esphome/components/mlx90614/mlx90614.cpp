@@ -41,6 +41,7 @@ void mlx90614Component::dump_config() {
   LOG_UPDATE_INTERVAL(this);
   LOG_SENSOR("  ", "Ambient Temperature", this->ambient_temperature_sensor_);
   LOG_SENSOR("  ", "Object Temperature", this->object_temperature_sensor_);
+  LOG_SENSOR("  ", "Emissivity", this->emissivity_sensor_);
 }
 
 void mlx90614Component::update() {

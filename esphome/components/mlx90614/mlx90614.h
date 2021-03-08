@@ -58,7 +58,10 @@ class mlx90614Component : public PollingComponent, public i2c::I2CDevice {
     void set_ambient_temperature_sensor(sensor::Sensor *ambient_temperature_sensor) { ambient_temperature_sensor_ = ambient_temperature_sensor; }
     void set_object_temperature_sensor(sensor::Sensor *object_temperature_sensor) { object_temperature_sensor_ = object_temperature_sensor; }
     void set_emissivity_sensor(sensor::Sensor *emissivity_sensor) { emissivity_sensor_ = emissivity_sensor; }
-    void set_emissivity(double emissivity) {emissivity_=clamp(emissivity, 0.1, 1.0); }
+    void set_emissivity(double emissivity) {
+      emissivity_=clamp(emissivity, 0.1, 1.0); 
+      writeEmissivity();
+    }
     float  readAmbient(void) { readTemp(MLX90614_TA); return readTemp(MLX90614_TA); }
     float  readObject(void) { readTemp(MLX90614_TOBJ1); return readTemp(MLX90614_TOBJ1); }
 
@@ -67,9 +70,12 @@ class mlx90614Component : public PollingComponent, public i2c::I2CDevice {
       return(((double)read16(MLX90614_EMISS)) / 65535.0);
     }
 
+    void writeEmissivity() { writeEmissivity(emissivity_);}
     void writeEmissivity(double emissivity) {
       uint16_t ereg = (uint16_t)(0xffff * emissivity);
       write16(MLX90614_EMISS, 0); // erase
+      delay(10);
+      write16(MLX90614_EMISS, ereg);
       delay(10);
       write16(MLX90614_EMISS, ereg);
       delay(10);
