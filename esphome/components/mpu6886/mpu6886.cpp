@@ -138,6 +138,7 @@ void MPU6886Component::setup() {
     this->mark_failed();
     return;
   }
+
   if (interrupt_pin_ != nullptr)
     interrupt_pin_->attach_interrupt(MPU6886Component::gpio_intr, this, CHANGE);
 

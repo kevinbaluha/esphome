@@ -16,8 +16,8 @@ CONF_GYRO_Y = 'gyro_y'
 CONF_GYRO_Z = 'gyro_z'
 CONF_INTERRUPT_PIN = 'interrupt_pin'
 
-mpu6886_ns = cg.esphome_ns.namespace('mpu6886')
-MPU6886Component = mpu6886_ns.class_('MPU6886Component', cg.PollingComponent, i2c.I2CDevice)
+mpu6886a_ns = cg.esphome_ns.namespace('mpu6886a')
+MPU6886aComponent = mpu6886a_ns.class_('MPU6886aComponent', cg.PollingComponent, i2c.I2CDevice)
 
 accel_schema = sensor.sensor_schema(UNIT_METER_PER_SECOND_SQUARED, ICON_BRIEFCASE_DOWNLOAD, 2,
                                     DEVICE_CLASS_EMPTY)
@@ -26,7 +26,7 @@ gyro_schema = sensor.sensor_schema(UNIT_DEGREE_PER_SECOND, ICON_SCREEN_ROTATION,
 temperature_schema = sensor.sensor_schema(UNIT_CELSIUS, ICON_EMPTY, 1, DEVICE_CLASS_TEMPERATURE)
 
 CONFIG_SCHEMA = cv.Schema({
-    cv.GenerateID(): cv.declare_id(MPU6886Component),
+    cv.GenerateID(): cv.declare_id(MPU6886aComponent),
     cv.Optional(CONF_ACCEL_X): accel_schema,
     cv.Optional(CONF_ACCEL_Y): accel_schema,
     cv.Optional(CONF_ACCEL_Z): accel_schema,
