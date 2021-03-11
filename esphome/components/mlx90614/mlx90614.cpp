@@ -26,10 +26,7 @@ static const char *TAG = "mlx90614";
 #define MLX90614_ID4 0x3F
 
 void mlx90614Component::setup() {
-  uint8_t raw_data[3];
-  memset(&raw_data,0x00, sizeof(raw_data));
-  this->read_bytes(MLX90614_ADDR, raw_data, 3);
-  ESP_LOGVV("mlx90614", "%x %x %x ADDR", raw_data[0], raw_data[1], raw_data[2] );
+  writeEmissivity();
 }
 
 void mlx90614Component::dump_config() {
@@ -80,16 +77,29 @@ void mlx90614Component::write16(uint8_t reg, uint16_t data) {
   pecbuf[1] = reg;
   pecbuf[2] = data & 0xff;
   pecbuf[3] = data >> 8;
+
   pec = crc8(pecbuf, sizeof pecbuf);
+
   raw_begin_transmission();
-  raw_write(&address_, 1);
-  raw_write(&reg, 1);
+  raw_write(&pecbuf[1], 1);
   raw_write(&pecbuf[2],1);    // lo
   raw_write(&pecbuf[3],1);    // hi
   raw_write(&pec,1);          // pec
   raw_end_transmission(true);
 
 }
+
+void mlx90614Component::writeEmissivity(double emissivity) {
+  uint16_t ereg = (uint16_t)(0xffff * emissivity);
+  write16(MLX90614_EMISS, 0); // erase
+  delay(10);
+  write16(MLX90614_EMISS, ereg);
+  write16(MLX90614_EMISS, ereg);
+
+  emissivity_ = readEmissivity();
+  ESP_LOGD(TAG, "mlx90614 emissivity set (%lf) read: (%lf) ", emissivity, emissivity_);
+}
+
 
 byte mlx90614Component::crc8(byte *addr, byte len) {
   // The PEC calculation includes all bits except the START, REPEATED START, STOP,

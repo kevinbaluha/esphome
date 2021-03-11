@@ -27,7 +27,6 @@ CONFIG_SCHEMA = cv.Schema({
     cv.Optional(CONF_EMISSIVITY): emissivity_schema 
 }).extend(cv.polling_component_schema('60s')).extend(i2c.i2c_device_schema(0x5a))
 
-
 def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     yield cg.register_component(var, config)
