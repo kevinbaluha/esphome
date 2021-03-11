@@ -14,8 +14,8 @@ TH02Component = th02_ns.class_('TH02Component', cg.PollingComponent, i2c.I2CDevi
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(TH02Component),
     cv.Optional(CONF_TEMPERATURE):
-        sensor.sensor_schema(UNIT_CELSIUS, ICON_EMPTY, 1, DEVICE_CLASS_TEMPERATURE),
-    cv.Optional(CONF_HUMIDITY): sensor.sensor_schema(UNIT_PERCENT, ICON_EMPTY, 1, DEVICE_CLASS_HUMIDITY),
+        sensor.sensor_schema(UNIT_CELSIUS, ICON_EMPTY, 4, DEVICE_CLASS_TEMPERATURE),
+    cv.Optional(CONF_HUMIDITY): sensor.sensor_schema(UNIT_PERCENT, ICON_EMPTY, 6, DEVICE_CLASS_HUMIDITY),
 }).extend(cv.polling_component_schema('60s')).extend(i2c.i2c_device_schema(0x40))
 
 

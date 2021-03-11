@@ -6,8 +6,7 @@
 namespace esphome {
 namespace mpu6886a {
 
-
-static const char *TAG = "sensor.mpu6886a";
+static const char *TAG = "mpu6886a.sensor";
 
 void MPU6886aComponent::update(void) {
   ESP_LOGV(TAG, "    Updating MPU6886...");
@@ -17,7 +16,8 @@ void MPU6886aComponent::update(void) {
   float accel_z;
   getAccelData(&accel_x, &accel_y, &accel_z);
 
-//  float temperature = data[3] / 340.0f + 36.53f;
+  float temperature = 0.0; //data[3] / 340.0f + 36.53f;
+  getTempData(&temperature);
 
   float gyro_x;
   float gyro_y;
@@ -27,7 +27,7 @@ void MPU6886aComponent::update(void) {
   ESP_LOGD(TAG,
            "Got accel={x=%.3f m/s², y=%.3f m/s², z=%.3f m/s²}, "
            "gyro={x=%.3f °/s, y=%.3f °/s, z=%.3f °/s}, temp=%.3f°C",
-           accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z, 0.0 /* temperature */);
+           accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z, temperature);
 
   if (this->accel_x_sensor_ != nullptr)
     this->accel_x_sensor_->publish_state(accel_x);
@@ -36,8 +36,8 @@ void MPU6886aComponent::update(void) {
   if (this->accel_z_sensor_ != nullptr)
     this->accel_z_sensor_->publish_state(accel_z);
 
-  /* if (this->temperature_sensor_ != nullptr)
-    this->temperature_sensor_->publish_state(temperature); */
+  if (this->temperature_sensor_ != nullptr)
+    this->temperature_sensor_->publish_state(temperature);
 
   if (this->gyro_x_sensor_ != nullptr)
     this->gyro_x_sensor_->publish_state(gyro_x);
@@ -54,7 +54,8 @@ float MPU6886aComponent::get_setup_priority() const { return setup_priority::DAT
 void MPU6886aComponent::setup(void) {
   Init();
   if (interrupt_pin_ != nullptr) {
-    enableWakeOnMotion(AFS_16G,0x1f );
+    ESP_LOGV(TAG, "Enabling Interrupts on pin %u", interrupt_pin_->get_pin());
+    enableWakeOnMotion(AFS_16G,threshold_ );
     interrupt_pin_->attach_interrupt(MPU6886aComponent::gpio_intr, this, CHANGE);
 
   }
@@ -405,6 +406,78 @@ void ICACHE_RAM_ATTR MPU6886aComponent::gpio_intr(MPU6886aComponent *arg) {
   arg->ClearAllIRQ();
 }
 
+void MPU6886aComponent::set_threshold(uint8_t threshold) { 
+    threshold_ = threshold; 
+    ESP_LOGI(TAG, "    Updating MPU6886 threshold (%u)", threshold);
+}
+void MPU6886aComponent::set_accel_x_self_test(uint8_t val) {
+    accel_config_[0] = setbits2mask(accel_config_[0], ACCEL_CF_X_ST, val);	
+    const char *bool_ = (val?"Enabling":"Disabling");
+    ESP_LOGI(TAG, "    Updating MPU6886 %s X Self Test (%u:%u)", bool_, accel_config_[0], accel_config_[1]);
+}
+void MPU6886aComponent::set_accel_y_self_test(uint8_t val) {
+    accel_config_[0] = setbits2mask(accel_config_[0], ACCEL_CF_Y_ST, val);	
+    const char *bool_ = (val?"Enabling":"Disabling");
+    ESP_LOGI(TAG, "    Updating MPU6886 %s Y Self Test (%u:%u)", bool_, accel_config_[0], accel_config_[1]);
+}
+void MPU6886aComponent::set_accel_z_self_test(uint8_t val) {
+    accel_config_[0] = setbits2mask(accel_config_[0], ACCEL_CF_Z_ST, val);	
+    const char *bool_ = (val?"Enabling":"Disabling");
+    ESP_LOGI(TAG, "    Updating MPU6886 %s Z Self Test (%u:%u)", bool_, accel_config_[0], accel_config_[1]);
+}
+void MPU6886aComponent::set_accel_full_scale(uint8_t val) {
+    accel_config_[0] = setbits2val(accel_config_[0], ACCEL_CF_FS_SEL, val<<2);
+    ESP_LOGI(TAG, "    Updating MPU6886 Full Scale to %u (%u:%u)", val, accel_config_[0], accel_config_[1]);
+}
+void MPU6886aComponent::set_accel_low_power_samples(uint8_t val) {
+    accel_config_[1] = setbits2val(accel_config_[1], ACCEL_CF_LP_SAMP, val<<4);
+    ESP_LOGI(TAG, "    Updating MPU6886 Low Power Samples to %u (%u:%u)", val, accel_config_[0], accel_config_[1]);
+}
+void MPU6886aComponent::set_accel_bybass_lp(uint8_t val) {
+    accel_config_[1] = setbits2mask(accel_config_[1], ACCEL_CF_BYPASS_LP, val);
+    const char *bool_ = (val?"true":"false");
+    ESP_LOGI(TAG, "    Updating MPU6886 Low Power ByBass to %s (%u:%u)", bool_, accel_config_[0], accel_config_[1]);
+}
+void MPU6886aComponent::set_accel_lp_filter(uint8_t val) {
+    accel_config_[1] = setbits2val(accel_config_[1], ACCEL_CF_LP_FILTER, val);
+    ESP_LOGI(TAG, "    Updating MPU6886 Low Power Filter to %u (%u:%u)", val, accel_config_[0], accel_config_[1]);
+}
+void MPU6886aComponent::set_wo_move_x(uint8_t womX) {
+    intr_wake_flag = setbits2mask(intr_wake_flag, X_INT_ENABLE, womX);
+    intr_wo_x = womX;
+    const char * t = (womX?"setting":"clearing");
+    ESP_LOGI(TAG, "    Updating MPU6886 %s Wake ON X Flag %u", t, intr_wake_flag);
+}
+void MPU6886aComponent::set_wo_move_y(uint8_t womY) { 
+    intr_wake_flag = setbits2mask(intr_wake_flag, Y_INT_ENABLE, womY);
+    intr_wo_y = womY;
+    const char * t = (womY?"setting":"clearing");
+    ESP_LOGI(TAG, "    Updating MPU6886 %s Wake ON Y Flag %u", t, intr_wake_flag);
+}
+void MPU6886aComponent::set_wo_move_z(uint8_t womZ) {
+    intr_wake_flag = setbits2mask(intr_wake_flag, Z_INT_ENABLE, womZ);
+    intr_wo_z = womZ;
+    const char * t = (womZ?"setting":"clearing");
+    ESP_LOGI(TAG, "    Updating MPU6886 %s Wake ON Z Flag %u", t, intr_wake_flag);
+}
+void MPU6886aComponent::set_wo_overflow(uint8_t wo_ov) {
+    intr_wake_flag = setbits2mask(intr_wake_flag, OVERFLOW_INT_ENABLE, wo_ov);
+    intr_wo_ov = wo_ov;
+    const char * t = (wo_ov?"setting":"clearing");
+    ESP_LOGI(TAG, "    Updating MPU6886 %s Wake ON Overflow Flag %u", t, intr_wake_flag);
+}
+void MPU6886aComponent::set_wo_gyro(uint8_t wo_gyro) {
+    intr_wake_flag = setbits2mask(intr_wake_flag, GYRO_READY_INT, wo_gyro);
+    intr_wo_gyro = wo_gyro;
+    const char * t = (wo_gyro?"setting":"clearing");
+    ESP_LOGI(TAG, "    Updating MPU6886 %s Wake ON Gyro Flag %u", t, intr_wake_flag);
+}
+void MPU6886aComponent::set_wo_data(uint8_t wo_data) {
+    intr_wake_flag = setbits2mask(intr_wake_flag, DATA_READY_INT, wo_data);
+    intr_wo_data = wo_data;
+    const char * t = (wo_data?"setting":"clearing");
+    ESP_LOGI(TAG, "    Updating MPU6886 %s Wake ON Data Flag %u", t , intr_wake_flag);
+}
 
 }
 }

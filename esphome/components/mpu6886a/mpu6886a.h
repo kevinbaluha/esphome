@@ -18,6 +18,9 @@
 namespace esphome {
 namespace mpu6886a {
 
+#define setbits2mask(val, mask, mask_flag)  ((val & ~mask) | (mask_flag?mask:0x00))
+#define setbits2val(val, mask, mask_value)  ((val & ~mask) | (mask_value&mask))
+
 #define MPU6886_ADDRESS           0x68 
 #define MPU6886_WHOAMI            0x75
 #define MPU6886_ACCEL_INTEL_CTRL  0x69
@@ -69,6 +72,13 @@ namespace mpu6886a {
 #define DATA_READY_INT		0x01
 #define XYZ_INT_ENABLE	X_INT_ENABLE|Y_INT_ENABLE|Z_INT_ENABLE
 
+#define ACCEL_CF_X_ST           0x80
+#define ACCEL_CF_Y_ST           0x40
+#define ACCEL_CF_Z_ST           0x20
+#define ACCEL_CF_FS_SEL         0x0c
+#define ACCEL_CF_LP_SAMP        0x30
+#define ACCEL_CF_BYPASS_LP      0x08
+#define ACCEL_CF_LP_FILTER      0x07
 
 class MPU6886aComponent  : public PollingComponent, public i2c::I2CDevice {
   public:
@@ -126,6 +136,20 @@ class MPU6886aComponent  : public PollingComponent, public i2c::I2CDevice {
     void set_gyro_y_sensor(sensor::Sensor *gyro_y_sensor) { gyro_y_sensor_ = gyro_y_sensor; }
     void set_gyro_z_sensor(sensor::Sensor *gyro_z_sensor) { gyro_z_sensor_ = gyro_z_sensor; }
 
+    void set_threshold(uint8_t threshold);
+    void set_accel_x_self_test(uint8_t val);
+    void set_accel_y_self_test(uint8_t val);
+    void set_accel_z_self_test(uint8_t val);
+    void set_accel_full_scale(uint8_t val);
+    void set_accel_low_power_samples(uint8_t val);
+    void set_accel_bybass_lp(uint8_t val);
+    void set_accel_lp_filter(uint8_t val);
+    void set_wo_move_x(uint8_t womX);
+    void set_wo_move_y(uint8_t womY);
+    void set_wo_move_z(uint8_t womZ);
+    void set_wo_overflow(uint8_t wo_ov);
+    void set_wo_gyro(uint8_t wo_gyro);
+    void set_wo_data(uint8_t wo_data);
   protected:
     sensor::Sensor *accel_x_sensor_{nullptr};
     sensor::Sensor *accel_y_sensor_{nullptr};
@@ -135,8 +159,15 @@ class MPU6886aComponent  : public PollingComponent, public i2c::I2CDevice {
     sensor::Sensor *gyro_y_sensor_{nullptr};
     sensor::Sensor *gyro_z_sensor_{nullptr};
     GPIOPin *interrupt_pin_{nullptr};
-
-
+    uint8_t threshold_ = 0;
+    uint8_t intr_wo_x = 0;
+    uint8_t intr_wo_y = 0;
+    uint8_t intr_wo_z = 0;
+    uint8_t intr_wo_ov = 0;
+    uint8_t intr_wo_gyro = 0;
+    uint8_t intr_wo_data = 0;
+    uint8_t intr_wake_flag = 0;
+    uint8_t accel_config_[2] = {0,0};
 
   public:
     float aRes, gRes;
