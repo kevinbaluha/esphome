@@ -5,6 +5,11 @@
 namespace esphome {
 namespace sensor {
 
+#define ABS(a) ((a>0)?a:(a * -1))
+bool abs_compare(float a, float b)
+{
+    return (ABS(a)) < (ABS(b));
+}
 static const char *TAG = "sensor.filter";
 
 // Filter
@@ -109,8 +114,8 @@ optional<float> MinFilter::new_value(float value) {
 uint32_t MinFilter::expected_interval(uint32_t input) { return input * this->send_every_; }
 
 // MaxFilter
-MaxFilter::MaxFilter(size_t window_size, size_t send_every, size_t send_first_at)
-    : send_every_(send_every), send_at_(send_every - send_first_at), window_size_(window_size) {}
+MaxFilter::MaxFilter(size_t window_size, size_t send_every, size_t send_first_at, size_t use_abs )
+    : send_every_(send_every), send_at_(send_every - send_first_at), window_size_(window_size) { use_abs_ = use_abs;}
 void MaxFilter::set_send_every(size_t send_every) { this->send_every_ = send_every; }
 void MaxFilter::set_window_size(size_t window_size) { this->window_size_ = window_size; }
 optional<float> MaxFilter::new_value(float value) {
@@ -127,7 +132,11 @@ optional<float> MaxFilter::new_value(float value) {
 
     float max = 0.0f;
     if (!this->queue_.empty()) {
-      std::deque<float>::iterator it = std::max_element(queue_.begin(), queue_.end());
+      std::deque<float>::iterator it;
+      if (this->use_abs_) 
+	it = std::max_element(queue_.begin(), queue_.end(),abs_compare);
+      else
+	it = std::max_element(queue_.begin(), queue_.end());
       max = *it;
     }
 
@@ -138,6 +147,45 @@ optional<float> MaxFilter::new_value(float value) {
 }
 
 uint32_t MaxFilter::expected_interval(uint32_t input) { return input * this->send_every_; }
+
+// SlidingWindowMaxAbsValueFilter
+SlidingWindowMaxAbsValueFilter::SlidingWindowMaxAbsValueFilter(size_t window_size, size_t send_every, size_t send_first_at)
+    : send_every_(send_every), send_at_(send_every - send_first_at), window_size_(window_size) {}
+void SlidingWindowMaxAbsValueFilter::set_send_every(size_t send_every) { this->send_every_ = send_every; }
+float SlidingWindowMaxAbsValueFilter::max_abs(void) { 
+  std::list<float>::iterator the_value;
+  float max_abs = 0.0f;
+
+// Make iterate point to begining and incerement it one by one till it reaches the end of list.
+  for (the_value = this->list_.begin(); the_value != this->list_.end(); the_value++) {
+  // Access the object through iterator
+    if (my_abs(*the_value) > my_abs(max_abs)) max_abs = *the_value;
+  }
+  return max_abs;
+}
+void SlidingWindowMaxAbsValueFilter::set_window_size(size_t window_size) { this->window_size_ = window_size; }
+optional<float> SlidingWindowMaxAbsValueFilter::new_value(float value) {
+  if (!isnan(value)) {
+    if (this->list_.size() == this->window_size_) {
+      this->sum_ -= this->list_.front();
+      this->list_.pop_back();
+    }
+    this->list_.push_front(value);
+    this->sum_ += value;
+  }
+  
+  float max_abs = this->max_abs();
+  ESP_LOGVV(TAG, "SlidingWindowMaxAbsValueFilter(%p)::new_value(%f) -> %f", this, value, max_abs);
+
+  if (++this->send_at_ >= this->send_every_) {
+    this->send_at_ = 0;
+    ESP_LOGVV(TAG, "SlidingWindowMaxAbsValueFilter(%p)::new_value(%f) SENDING", this, value);
+    return max_abs;
+  }
+  return {};
+}
+
+uint32_t SlidingWindowMaxAbsValueFilter::expected_interval(uint32_t input) { return input * this->send_every_; }
 
 // SlidingWindowMovingAverageFilter
 SlidingWindowMovingAverageFilter::SlidingWindowMovingAverageFilter(size_t window_size, size_t send_every,
