@@ -26,6 +26,8 @@ DEVICE_CLASSES = [
 IS_PLATFORM_COMPONENT = True
 
 
+CONF_USE_ABS = 'use_abs'
+
 def validate_send_first_at(value):
     send_first_at = value.get(CONF_SEND_FIRST_AT)
     send_every = value[CONF_SEND_EVERY]
@@ -75,6 +77,7 @@ MedianFilter = sensor_ns.class_('MedianFilter', Filter)
 MinFilter = sensor_ns.class_('MinFilter', Filter)
 MaxFilter = sensor_ns.class_('MaxFilter', Filter)
 SlidingWindowMovingAverageFilter = sensor_ns.class_('SlidingWindowMovingAverageFilter', Filter)
+SlidingWindowMaxAbsValueFilter = sensor_ns.class_('SlidingWindowMaxAbsValueFilter', Filter)
 ExponentialMovingAverageFilter = sensor_ns.class_('ExponentialMovingAverageFilter', Filter)
 LambdaFilter = sensor_ns.class_('LambdaFilter', Filter)
 OffsetFilter = sensor_ns.class_('OffsetFilter', Filter)
@@ -184,14 +187,28 @@ MAX_SCHEMA = cv.All(cv.Schema({
     cv.Optional(CONF_WINDOW_SIZE, default=5): cv.positive_not_null_int,
     cv.Optional(CONF_SEND_EVERY, default=5): cv.positive_not_null_int,
     cv.Optional(CONF_SEND_FIRST_AT, default=1): cv.positive_not_null_int,
+    cv.Optional(CONF_USE_ABS, default=False): cv.boolean,
 }), validate_send_first_at)
 
 
 @FILTER_REGISTRY.register('max', MaxFilter, MAX_SCHEMA)
 def max_filter_to_code(config, filter_id):
     yield cg.new_Pvariable(filter_id, config[CONF_WINDOW_SIZE], config[CONF_SEND_EVERY],
-                           config[CONF_SEND_FIRST_AT])
+                           config[CONF_SEND_FIRST_AT], config[CONF_USE_ABS] )
 
+
+SLIDING_MAX_ABS_SCHEMA = cv.All(cv.Schema({
+    cv.Optional(CONF_WINDOW_SIZE, default=15): cv.positive_not_null_int,
+    cv.Optional(CONF_SEND_EVERY, default=15): cv.positive_not_null_int,
+    cv.Optional(CONF_SEND_FIRST_AT, default=1): cv.positive_not_null_int,
+}), validate_send_first_at)
+
+
+@FILTER_REGISTRY.register('sliding_window_max_abs_value', SlidingWindowMaxAbsValueFilter,
+                          SLIDING_MAX_ABS_SCHEMA )
+def sliding_window_max_abs_value_filter_to_code(config, filter_id):
+    yield cg.new_Pvariable(filter_id, config[CONF_WINDOW_SIZE], config[CONF_SEND_EVERY],
+                           config[CONF_SEND_FIRST_AT])
 
 SLIDING_AVERAGE_SCHEMA = cv.All(cv.Schema({
     cv.Optional(CONF_WINDOW_SIZE, default=15): cv.positive_not_null_int,

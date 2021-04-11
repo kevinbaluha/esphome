@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 #include <queue>
 #include "esphome/core/component.h"
 #include "esphome/core/helpers.h"
@@ -120,7 +121,7 @@ class MaxFilter : public Filter {
    *   on startup being published on the first *raw* value, so with no filter applied. Must be less than or equal to
    *   send_every.
    */
-  explicit MaxFilter(size_t window_size, size_t send_every, size_t send_first_at);
+  explicit MaxFilter(size_t window_size, size_t send_every, size_t send_first_at, size_t use_abs);
 
   optional<float> new_value(float value) override;
 
@@ -131,6 +132,42 @@ class MaxFilter : public Filter {
 
  protected:
   std::deque<float> queue_;
+  size_t send_every_;
+  size_t send_at_;
+  size_t window_size_;
+  size_t use_abs_{false};
+};
+
+/** Simple sliding window max abs value filter.
+ *
+ * Essentially just takes takes the average of the last window_size values and pushes them out
+ * every send_every.
+ */
+class SlidingWindowMaxAbsValueFilter : public Filter {
+ public:
+  /** Construct a SlidingWindowMaxAbsValueFilter.
+   *
+   * @param window_size The number of values that should be averaged.
+   * @param send_every After how many sensor values should a new one be pushed out.
+   * @param send_first_at After how many values to forward the very first value. Defaults to the first value
+   *   on startup being published on the first *raw* value, so with no filter applied. Must be less than or equal to
+   *   send_every.
+   */
+  explicit SlidingWindowMaxAbsValueFilter(size_t window_size, size_t send_every, size_t send_first_at);
+
+  optional<float> new_value(float value) override;
+
+  void set_send_every(size_t send_every);
+  void set_window_size(size_t window_size);
+
+  uint32_t expected_interval(uint32_t input) override;
+
+ protected:
+  float max_abs(void);
+  float my_abs(float a) { return (a < 0)?a * -1:a; }
+  float sum_{0.0};
+  float max_abs_{0.0};
+  std::list<float> list_;
   size_t send_every_;
   size_t send_at_;
   size_t window_size_;
